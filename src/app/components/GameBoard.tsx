@@ -129,9 +129,9 @@ export default function GameBoard({
     e.preventDefault()
     
     const touch = e.touches[0]
-    const element = document.elementFromPoint(touch.clientX, touch.clientY)
+    const element = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement
     
-    if (element && element.dataset.row && element.dataset.col) {
+    if (element && element.dataset && element.dataset.row && element.dataset.col) {
       const row = parseInt(element.dataset.row)
       const col = parseInt(element.dataset.col)
       handleCellMouseEnter(row, col)
@@ -142,20 +142,6 @@ export default function GameBoard({
     e.preventDefault()
     handleMouseUp()
   }, [handleMouseUp])
-
-  const getCellStyle = (rowIndex: number, colIndex: number) => {
-    const isCurrentlySelected = isInPath(rowIndex, colIndex)
-    const isFoundCell = isInFoundWord(rowIndex, colIndex)
-    
-    if (isCurrentlySelected) {
-      return 'bg-blue-500 text-white border-blue-600'
-    } else if (isFoundCell) {
-      const foundCellColor = getFoundCellColor(rowIndex, colIndex)
-      return '' // We'll use inline styles for found cells
-    } else {
-      return 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
-    }
-  }
 
   const getConnectionPath = (start: {row: number, col: number}, end: {row: number, col: number}) => {
     const cellSize = 48
