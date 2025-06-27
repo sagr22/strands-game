@@ -99,7 +99,6 @@ export default function GameBoard({
       handleCellMouseEnter(row, col)
     }
   }, [isSelecting, handleCellMouseEnter])
-  
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     e.preventDefault()
@@ -218,8 +217,15 @@ export default function GameBoard({
           })}
         </svg>
 
-        {/* Grid of circular letters */}
-        <div className="grid grid-cols-6 gap-2" style={{zIndex: 2, position: 'relative'}}>
+        {/* Grid of circular letters - Fixed grid layout */}
+        <div 
+          className="grid gap-2" 
+          style={{
+            gridTemplateColumns: 'repeat(6, 1fr)',
+            zIndex: 2, 
+            position: 'relative'
+          }}
+        >
           {grid.map((row, rowIndex) =>
             row.map((letter, colIndex) => (
               <div
@@ -238,8 +244,7 @@ export default function GameBoard({
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
                 style={{
-                  touchAction: 'none',
-                  zIndex: 2
+                  touchAction: 'none'
                 }}
               >
                 {letter}
