@@ -20,6 +20,44 @@ export default function GameBoard({
   const [isSelecting, setIsSelecting] = useState(false)
   const [foundWordPaths, setFoundWordPaths] = useState<{[word: string]: {row: number, col: number}[]}>({})
 
+  // Array of colors for different found words
+  const wordColors = [
+    '#facc15', // yellow
+    '#10b981', // emerald
+    '#3b82f6', // blue
+    '#ef4444', // red
+    '#8b5cf6', // violet
+    '#f59e0b', // amber
+    '#06b6d4', // cyan
+    '#84cc16', // lime
+    '#ec4899', // pink
+    '#6366f1', // indigo
+  ]
+
+  // Function to get color for a specific word
+  const getWordColor = (word: string) => {
+    const wordIndex = foundWords.indexOf(word)
+    return wordColors[wordIndex % wordColors.length]
+  }
+
+  // Function to get background color for found cells
+  const getFoundCellColor = (row: number, col: number) => {
+    // Find which word this cell belongs to
+    for (const [word, path] of Object.entries(foundWordPaths)) {
+      if (path.some(pos => pos.row === row && pos.col === col)) {
+        const wordIndex = foundWords.indexOf(word)
+        // Return a lighter version of the word color for the background
+        const baseColor = wordColors[wordIndex % wordColors.length]
+        return {
+          backgroundColor: baseColor + '40', // Add transparency
+          borderColor: baseColor,
+          color: '#000'
+        }
+      }
+    }
+    return null
+  }
+
   const isAdjacent = (pos1: {row: number, col: number}, pos2: {row: number, col: number}) => {
     const rowDiff = Math.abs(pos1.row - pos2.row)
     const colDiff = Math.abs(pos1.col - pos2.col)
@@ -91,15 +129,14 @@ export default function GameBoard({
     e.preventDefault()
     
     const touch = e.touches[0]
-    const element = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement
+    const element = document.elementFromPoint(touch.clientX, touch.clientY)
     
-    if (element && element.dataset && element.dataset.row && element.dataset.col) {
+    if (element && element.dataset.row && element.dataset.col) {
       const row = parseInt(element.dataset.row)
       const col = parseInt(element.dataset.col)
       handleCellMouseEnter(row, col)
     }
   }, [isSelecting, handleCellMouseEnter])
-  
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     e.preventDefault()
@@ -113,7 +150,8 @@ export default function GameBoard({
     if (isCurrentlySelected) {
       return 'bg-blue-500 text-white border-blue-600'
     } else if (isFoundCell) {
-      return 'bg-yellow-400 text-black border-yellow-500'
+      const foundCellColor = getFoundCellColor(rowIndex, colIndex)
+      return '' // We'll use inline styles for found cells
     } else {
       return 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
     }
@@ -182,7 +220,7 @@ export default function GameBoard({
                     y={connection.y}
                     width={connection.width}
                     height={connection.height}
-                    fill="#facc15"
+                    fill={getWordColor(word)}
                     transform={`rotate(${connection.angle} ${connection.x} ${connection.y + connection.height/2})`}
                   />
                 )
@@ -221,30 +259,42 @@ export default function GameBoard({
         {/* Grid of circular letters */}
         <div className="grid grid-cols-6 gap-2" style={{zIndex: 2, position: 'relative'}}>
           {grid.map((row, rowIndex) =>
-            row.map((letter, colIndex) => (
-              <div
-                key={`${rowIndex}-${colIndex}`}
-                data-row={rowIndex}
-                data-col={colIndex}
-                className={`
-                  w-12 h-12 flex items-center justify-center text-lg font-bold
-                  rounded-full cursor-pointer transition-all border-2
-                  ${getCellStyle(rowIndex, colIndex)}
-                `}
-                onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
-                onMouseEnter={() => handleCellMouseEnter(rowIndex, colIndex)}
-                onMouseUp={handleMouseUp}
-                onTouchStart={(e) => handleTouchStart(e, rowIndex, colIndex)}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                style={{
-                  touchAction: 'none',
-                  zIndex: 2
-                }}
-              >
-                {letter}
-              </div>
-            ))
+            row.map((letter, colIndex) => {
+              const isCurrentlySelected = isInPath(rowIndex, colIndex)
+              const isFoundCell = isInFoundWord(rowIndex, colIndex)
+              const foundCellColor = isFoundCell ? getFoundCellColor(rowIndex, colIndex) : null
+              
+              return (
+                <div
+                  key={`${rowIndex}-${colIndex}`}
+                  data-row={rowIndex}
+                  data-col={colIndex}
+                  className={`
+                    w-12 h-12 flex items-center justify-center text-lg font-bold
+                    rounded-full cursor-pointer transition-all border-2
+                    ${isCurrentlySelected 
+                      ? 'bg-blue-500 text-white border-blue-600' 
+                      : !isFoundCell 
+                        ? 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
+                        : ''
+                    }
+                  `}
+                  style={{
+                    touchAction: 'none',
+                    zIndex: 2,
+                    ...(foundCellColor || {})
+                  }}
+                  onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
+                  onMouseEnter={() => handleCellMouseEnter(rowIndex, colIndex)}
+                  onMouseUp={handleMouseUp}
+                  onTouchStart={(e) => handleTouchStart(e, rowIndex, colIndex)}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  {letter}
+                </div>
+              )
+            })
           )}
         </div>
       </div>
