@@ -26,15 +26,15 @@ export default function GameBoard({
     return rowDiff <= 1 && colDiff <= 1 && !(rowDiff === 0 && colDiff === 0)
   }
 
-  const isInPath = (row: number, col: number) => {
+  const isInPath = useCallback((row: number, col: number) => {
     return currentPath.some(pos => pos.row === row && pos.col === col)
-  }
+  }, [currentPath])
 
-  const isInFoundWord = (row: number, col: number) => {
+  const isInFoundWord = useCallback((row: number, col: number) => {
     return Object.values(foundWordPaths).some(path => 
       path.some(pos => pos.row === row && pos.col === col)
     )
-  }
+  }, [foundWordPaths])
 
   const handleCellMouseDown = useCallback((row: number, col: number) => {
     if (isInFoundWord(row, col)) return
@@ -42,7 +42,7 @@ export default function GameBoard({
     setIsSelecting(true)
     setCurrentPath([{row, col}])
     setSelectedLetters(grid[row][col])
-  }, [grid, setCurrentPath, setSelectedLetters, foundWordPaths])
+  }, [grid, setCurrentPath, setSelectedLetters, isInFoundWord])
 
   const handleCellMouseEnter = useCallback((row: number, col: number) => {
     if (!isSelecting || isInFoundWord(row, col)) return
@@ -60,7 +60,7 @@ export default function GameBoard({
       setCurrentPath(newPath)
       setSelectedLetters(newPath.map(pos => grid[pos.row][pos.col]).join(''))
     }
-  }, [isSelecting, currentPath, grid, setCurrentPath, setSelectedLetters, foundWordPaths])
+  }, [isSelecting, currentPath, grid, setCurrentPath, setSelectedLetters, isInFoundWord, isInPath])
 
   const handleMouseUp = useCallback(() => {
     if (selectedLetters.length >= 3) {
@@ -105,8 +105,6 @@ export default function GameBoard({
     
     const adjustedStartX = startX + Math.cos(angle) * radius
     const adjustedStartY = startY + Math.sin(angle) * radius
-    const adjustedEndX = endX - Math.cos(angle) * radius
-    const adjustedEndY = endY - Math.sin(angle) * radius
     
     const rectWidth = distance - (2 * radius)
     const rectHeight = 6
