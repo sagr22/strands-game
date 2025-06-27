@@ -76,6 +76,36 @@ export default function GameBoard({
     onReset()
   }, [selectedLetters, themeWords, foundWords, currentPath, onWordFound, onReset])
 
+  // Touch event handlers for mobile
+  const handleTouchStart = useCallback((e: React.TouchEvent, row: number, col: number) => {
+    e.preventDefault()
+    if (isInFoundWord(row, col)) return
+    
+    setIsSelecting(true)
+    setCurrentPath([{row, col}])
+    setSelectedLetters(grid[row][col])
+  }, [grid, setCurrentPath, setSelectedLetters, isInFoundWord])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isSelecting) return
+    e.preventDefault()
+    
+    const touch = e.touches[0]
+    const element = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement
+    
+    if (element && element.dataset && element.dataset.row && element.dataset.col) {
+      const row = parseInt(element.dataset.row)
+      const col = parseInt(element.dataset.col)
+      handleCellMouseEnter(row, col)
+    }
+  }, [isSelecting, handleCellMouseEnter])
+  
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    e.preventDefault()
+    handleMouseUp()
+  }, [handleMouseUp])
+
   const getCellStyle = (rowIndex: number, colIndex: number) => {
     const isCurrentlySelected = isInPath(rowIndex, colIndex)
     const isFoundCell = isInFoundWord(rowIndex, colIndex)
@@ -194,6 +224,8 @@ export default function GameBoard({
             row.map((letter, colIndex) => (
               <div
                 key={`${rowIndex}-${colIndex}`}
+                data-row={rowIndex}
+                data-col={colIndex}
                 className={`
                   w-12 h-12 flex items-center justify-center text-lg font-bold
                   rounded-full cursor-pointer transition-all border-2
@@ -202,6 +234,13 @@ export default function GameBoard({
                 onMouseDown={() => handleCellMouseDown(rowIndex, colIndex)}
                 onMouseEnter={() => handleCellMouseEnter(rowIndex, colIndex)}
                 onMouseUp={handleMouseUp}
+                onTouchStart={(e) => handleTouchStart(e, rowIndex, colIndex)}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{
+                  touchAction: 'none',
+                  zIndex: 2
+                }}
               >
                 {letter}
               </div>
